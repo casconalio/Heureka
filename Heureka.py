@@ -5,16 +5,12 @@ class Road:
         for word in line.split():
             words.append(word)
 
-        if isinstance(words[0], int):
-            self.x_start=words[0]
-            self.y_start=words[1]
-            self.name=words[2]
-            self.x_finish=words[3]
-            self.y_finish=words[4]
-        else:#the very first value is the starting location
-            self.x_start=words[1]
-            self.y_start=words[2]
-            self.name=words[0]
+        self.x_start=words[0]
+        self.y_start=words[1]
+        self.name=words[2]
+        self.x_finish=words[3]
+        self.y_finish=words[4]
+
 
 
 
@@ -29,6 +25,5 @@ def roads_array():
     return roads
 
 roads=roads_array()
-start_loc=roads[0]
-roads=roads[1:]
+
 
