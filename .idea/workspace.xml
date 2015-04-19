@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8cdc2883-fbf1-4092-845f-639328ab06fc" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Heureka.py" afterPath="$PROJECT_DIR$/Heureka.py" />
-    </list>
+    <list default="true" id="8cdc2883-fbf1-4092-845f-639328ab06fc" name="Default" comment="" />
     <ignored path="AI.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
@@ -33,7 +31,7 @@
       <file leaf-file-name="Heureka.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Heureka.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="3.716418" vertical-offset="0" max-vertical-offset="2520">
+            <state vertical-scroll-proportion="0.46268657" vertical-offset="1308" max-vertical-offset="2520">
               <caret line="83" column="4" selection-start-line="83" selection-start-column="4" selection-end-line="83" selection-end-column="4" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
@@ -59,8 +57,8 @@
     <detection-done>true</detection-done>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="65" />
-    <option name="y" value="52" />
+    <option name="x" value="125" />
+    <option name="y" value="402" />
     <option name="width" value="1195" />
     <option name="height" value="736" />
   </component>
@@ -349,7 +347,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="52" width="1195" height="736" extended-state="0" />
+    <frame x="125" y="402" width="1195" height="736" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -407,7 +405,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Heureka.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="3.716418" vertical-offset="0" max-vertical-offset="2520">
+        <state vertical-scroll-proportion="0.46268657" vertical-offset="1308" max-vertical-offset="2520">
           <caret line="83" column="4" selection-start-line="83" selection-start-column="4" selection-end-line="83" selection-end-column="4" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
