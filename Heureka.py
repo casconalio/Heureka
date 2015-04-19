@@ -68,9 +68,12 @@ def possible_nodes(roads, loc, final):
             #print("dist1:" + str(dist1) + " dist2:" + str(dist2))
             if dist1 < dist2:
                 continue
+            previous_row = list(to_explore[-1, :]) #casts to list so no conflicting data types
+            if possible == previous_row: #avoids duplicates
+                continue
 
             to_explore = np.vstack((to_explore, possible)) #appends to matrix of all possible points to explore
-
+    to_explore = np.delete(to_explore, (0), axis=0) #removes first row because is full of zeros
     return to_explore
 
 def path_finder(roads, loc, final):
@@ -78,7 +81,7 @@ def path_finder(roads, loc, final):
     routes_traveled = []
     new_route = Route(loc, final)
 
-    #new_route.path.append(loc) #initializes starting position
+    
     routes_traveled.append(new_route)
     while loc[0] != final[0] or loc[1] != final[1]: #while not at final pos
 
@@ -91,16 +94,19 @@ def path_finder(roads, loc, final):
         routes_traveled[0].cost = cost
 
         to_explore = np.delete(to_explore, (0), axis=0) #removes first row
-
+        print("length of explore:" + str(len(to_explore)))
         #THIS ADDS A NEW ROW
-        for possible_point in to_explore: #possible nodes to check
+        if len(to_explore) > 0:
 
-            cost = calc_cost(loc, possible_point, final) + current.cost
+            for possible_point in to_explore: #possible nodes to check
 
-            new_route.cost = cost
-            new_route.path = current.path.append(possible_point)
+                cost = calc_cost(loc, possible_point, final) + current.cost
 
-            routes_traveled.append(new_route)
+                new_route.cost = cost
+                new_route.path = current.path
+                new_route.path.append(possible_point)
+
+                routes_traveled.append(new_route)
 
 
         routes_traveled = sorted(routes_traveled, key=lambda route: route.cost) #sorts based on lowest cost
