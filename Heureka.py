@@ -81,7 +81,6 @@ def path_finder(roads, loc, final):
     routes_traveled = []
     new_route = Route(loc, final)
 
-    
     routes_traveled.append(new_route)
     while loc[0] != final[0] or loc[1] != final[1]: #while not at final pos
 
@@ -89,8 +88,8 @@ def path_finder(roads, loc, final):
 
         #THIS UPDATES ROUTES TRAVELS WITHOUT ADDING NEW ROW
         current = routes_traveled[0] #current is always front because is sorted
-        cost = calc_cost(loc, to_explore[0, :], final) + current.cost
-        routes_traveled[0].path.append(to_explore[0, :]) #MAKE SURE THIS WORKS!!
+        cost = calc_cost(loc, list(to_explore[0, :]), final) + current.cost
+        routes_traveled[0].path.append(list(to_explore[0, :])) #MAKE SURE THIS WORKS!!
         routes_traveled[0].cost = cost
 
         to_explore = np.delete(to_explore, (0), axis=0) #removes first row
@@ -99,7 +98,7 @@ def path_finder(roads, loc, final):
         if len(to_explore) > 0:
 
             for possible_point in to_explore: #possible nodes to check
-
+                list(possible_point)
                 cost = calc_cost(loc, possible_point, final) + current.cost
 
                 new_route.cost = cost
