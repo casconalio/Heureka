@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import copy
 
 
 class Road:
@@ -18,6 +19,7 @@ class Road:
 
 class Route:
     def __init__(self, loc, final):
+        self.path = []
         self.path=[loc] #path taken
         self.cost = distance(loc[0], loc[1], final[0], final[1])
 
@@ -48,17 +50,10 @@ def possible_nodes(roads, loc, final):
 
     for road in roads:
 
-        if ((loc[0] == road.x_start and loc[1] == road.y_start) #checks for possible points
-        or (loc[0] == road.x_finish and loc[1] == road.y_finish)):
+        if loc[0] == road.x_start and loc[1] == road.y_start:
 
-            possible_xloc = road.x_start
-            possible_yloc = road.y_start
-
-
-            #makes sure next point is not same as current point
-            if possible_xloc == loc[0] and possible_yloc == loc[1]:
-                possible_xloc = road.x_finish
-                possible_yloc = road.y_finish
+            possible_xloc = road.x_finish
+            possible_yloc = road.y_finish
 
             possible = [possible_xloc, possible_yloc]
             #consider changing to less than or equal to
@@ -66,8 +61,8 @@ def possible_nodes(roads, loc, final):
             dist1 = distance(loc[0], loc[1], final[0], final[1])
             dist2 = distance(possible[0], possible[1], final[0], final[1])
             #print("dist1:" + str(dist1) + " dist2:" + str(dist2))
-            if dist1 < dist2:
-                continue
+            """if dist1 < dist2: #doesnt matter because it will have a higher cost and be sorted to bottom
+                continue"""
             previous_row = list(to_explore[-1, :]) #casts to list so no conflicting data types
             if possible == previous_row: #avoids duplicates
                 continue
@@ -85,22 +80,30 @@ def path_finder(roads, loc, final):
     while loc[0] != final[0] or loc[1] != final[1]: #while not at final pos
 
         to_explore = possible_nodes(roads, loc, final) #points to explore
+        print("length of explore" + str(len(to_explore)))
+        while not len(to_explore):
+            routes_traveled.pop() #if not possible from current route delete route
+            print(len(routes_traveled))
+            if not len(routes_traveled):
+                return "not possible to reach destination"
+            loc = routes_traveled[0].path[-1] #return last location in the next best route
+            to_explore = possible_nodes(roads, loc, final)
+
 
         #THIS UPDATES ROUTES TRAVELS WITHOUT ADDING NEW ROW
-        current = routes_traveled[0] #current is always front because is sorted
+        current = copy.deepcopy(routes_traveled[0]) #current is always front because is sorted
         cost = calc_cost(loc, list(to_explore[0, :]), final) + current.cost
         routes_traveled[0].path.append(list(to_explore[0, :])) #MAKE SURE THIS WORKS!!
         routes_traveled[0].cost = cost
 
         to_explore = np.delete(to_explore, (0), axis=0) #removes first row
-        print("length of explore:" + str(len(to_explore)))
         #THIS ADDS A NEW ROW
         if len(to_explore) > 0:
 
             for possible_point in to_explore: #possible nodes to check
                 list(possible_point)
+                new_route = copy.deepcopy(current) #changes location in memory to not be the same
                 cost = calc_cost(loc, possible_point, final) + current.cost
-
                 new_route.cost = cost
                 new_route.path = current.path
                 new_route.path.append(possible_point)
@@ -127,7 +130,7 @@ final = [80, 70]
 
 path_finder(roads, loc, final)
 
-print("success")
+
 
 
 
