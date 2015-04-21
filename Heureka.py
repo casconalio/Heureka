@@ -146,7 +146,7 @@ def path_finder(roads, start, final):
         print(route.cost)
         print([route.path[0].x_start, route.path[0].y_start])
         for road in route.path:
-            print([road.x_finish, road.y_finish])
+            print([road.x_finish, road.y_finish, road.name])
 
     return "success"
 
