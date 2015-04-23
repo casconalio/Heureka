@@ -27,19 +27,32 @@ def calc_cost(loc1, loc2, destination):
     f= h + g - old_dist #subtract old dist because we would have every nodes distance to final in calculation
     return f
 
-#finds point based on intersection
-def find_point(road1, road2):
-    #checks all possible combinations start finish to find correct intersection
-    if road_start(road1) == road_start(road2):
-        return road_start(road1)
-    elif road_start(road1) == road_end(road2):
-        return road_start(road1)
-    elif road_end(road1) == road_start(road2):
-        return road_end(road1)
-    elif road_end(road1) == road_end(road2):
-        return road_end(road1)
-    else:
-        return "roads do not intersect"
+#finds point based on intersection names
+def find_point(road1_name, road2_name):
+    road1_possibility=[]
+    road2_possibility=[]
+    if road1_name == road2_name:
+        print("Please specify two different road names")
+        return
+    for road in roads:
+        if road.name == road1_name:
+            road1_possibility.append(road)
+            continue #prevents to objects from being assigned the same
+        if road.name == road2_name:
+            road2_possibility.append(road)
+    for road1 in road1_possibility:
+        for road2 in road2_possibility:
+            #checks all possible combinations start finish to find correct intersection
+            if road_start(road1) == road_start(road2):
+                return road_start(road1)
+            elif road_start(road1) == road_end(road2):
+                return road_start(road1)
+            elif road_end(road1) == road_start(road2):
+                return road_end(road1)
+            elif road_end(road1) == road_end(road2):
+                return road_end(road1)
+            else:
+                return "roads do not intersect"
 
 #returns array of all road objects
 def roads_array():
@@ -68,8 +81,10 @@ def road_end(road):
     finish=[x,y]
     return finish
 
-def possible_nodes(roads, current, start):
-    #to_explore=np.zeros((1,2)) #list of points to explore
+
+
+def roads_to_explore(roads, routes_traveled, start):
+    current = routes_traveled[0]
     possible_roads = []
     if not len(current.path): #ONLY ENTERS ON FIRST TIME BECAUSE IT COULD BE ONE OF FOUR ROAD OBJECTS
         loc = start
@@ -82,19 +97,17 @@ def possible_nodes(roads, current, start):
 
             skip_iter=0 #values are added if trying to add previously visited point
             #if the next point has already been explored in current path don't visit
-            for explored_roads in current.path:
-                explore_start = road_start(explored_roads)
-                explore_end = road_end(explored_roads)
-                if road_end(explored_roads) == possible or (start == possible and len(current.path)): #start coordinate is not in explored
-                    print("already explored")
-                    skip_iter= skip_iter+1
-                    break #skips rest of iters because point should not be appended
+            for routes in routes_traveled:
+                for explored_roads in routes.path:
+                    explore_start = road_start(explored_roads)
+                    explore_end = road_end(explored_roads)
+                    if road_end(explored_roads) == possible or (start == possible and len(current.path)): #start coordinate is not in explored
+                        print("already explored")
+                        skip_iter= skip_iter+1
+                        #break #skips rest of iters because point should not be appended
             if skip_iter: #skip iter so road not appended
-                continue
+                    continue
             possible_roads.append(road)
-            #to_explore = np.vstack((to_explore, possible)) #appends to matrix of all possible points to explore
-    #to_explore = np.delete(to_explore, (0), axis=0) #removes first row because is full of zeros
-    #return to_explore
     return possible_roads
 
 def path_finder(roads, start, final):
@@ -105,14 +118,14 @@ def path_finder(roads, start, final):
     loc = start
     while loc != final: #while not at final pos
 
-        to_explore = possible_nodes(roads, routes_traveled[0], start) #points to explore
+        to_explore = roads_to_explore(roads, routes_traveled, start) #points to explore
 
         while not len(to_explore): #if no possible places to explore enter this loop
             routes_traveled.pop() #if not possible from current route delete route
             if not len(routes_traveled):
                 return "not possible to reach destination"
             loc = [routes_traveled[0].path[-1].x_finish, routes_traveled[0].path[-1].y_finish] #return last location in the next best route
-            to_explore = possible_nodes(roads, current, start)
+            to_explore = roads_to_explore(roads, routes_traveled, start)
 
         #THIS UPDATES ROUTES TRAVELS WITHOUT ADDING NEW ROW
         current = copy.deepcopy(routes_traveled[0]) #current is always front because is sorted
@@ -122,7 +135,7 @@ def path_finder(roads, start, final):
         routes_traveled[0].cost = cost
 
         #to_explore = np.delete(to_explore, (0), axis=0) #removes first row
-        to_explore.pop()
+        to_explore.pop(0)
         #THIS ADDS A NEW ROW
         if len(to_explore) > 0:
 
@@ -141,6 +154,7 @@ def path_finder(roads, start, final):
 
 
 
+
     print("number of routes explored:" + str(len(routes_traveled)))
     for route in routes_traveled:
         print(route.cost)
@@ -153,16 +167,16 @@ def path_finder(roads, start, final):
 roads = roads_array()
 
 #ROADS MUST INTERSECT
-start_1 = roads[0]
-start_2 = roads[3]
+start_1 = roads[0].name
+start_2 = roads[7].name
 
-finish_1 = roads[10]
-finish_2 = roads[15]
+finish_1 = roads[10].name
+finish_2 = roads[15].name
 
 start = find_point(start_1, start_2)
 finish = find_point(finish_1, finish_2)
-print(start)
-print(finish)
+print("start loc:" +str(start))
+print("end loc:" + str(finish))
 print(path_finder(roads, start, finish))
 
 
