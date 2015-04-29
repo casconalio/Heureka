@@ -36,11 +36,11 @@ def find_point(road1_name, road2_name):
         return
     for road in roads:
         if road.name == road1_name:
-            road1_possibility.append(road)
-            continue #prevents to objects from being assigned the same
+            road1_possibility.append(road) #all road objects with the same name
+            continue #prevents to objects from being assigned the same, THIS IS UNNECESSARY I THINK
         if road.name == road2_name:
-            road2_possibility.append(road)
-    for road1 in road1_possibility:
+            road2_possibility.append(road) #all road objects with road 2's name
+    for road1 in road1_possibility: #searches for intersection between roads
         for road2 in road2_possibility:
             #checks all possible combinations start finish to find correct intersection
             if road_start(road1) == road_start(road2):
@@ -52,14 +52,15 @@ def find_point(road1_name, road2_name):
             elif road_end(road1) == road_end(road2):
                 return road_end(road1)
             else:
-                return "roads do not intersect"
+                return False
 
 #returns array of all road objects
 def roads_array():
     roads=[] #all road objects in array
     f=open("/home/badcode/Desktop/AI/copenhagen_data_fixed.txt", 'r')
     for line in f:
-        if len(line)>2: #for some reason last line is just 1 character of white space so this dodges that
+        if len(line)>2: #for some reason last line is just 1 character of white space so this
+            #dodges adding a empty road object
             new_road=Road(line)
             roads.append(new_road)
     return roads
@@ -80,8 +81,6 @@ def road_end(road):
     y=road.y_finish
     finish=[x,y]
     return finish
-
-
 
 def roads_to_explore(roads, routes_traveled, start):
     current = routes_traveled[0]
@@ -121,7 +120,8 @@ def path_finder(roads, start, final):
         to_explore = roads_to_explore(roads, routes_traveled, start) #points to explore
 
         while not len(to_explore): #if no possible places to explore enter this loop
-            routes_traveled.pop() #if not possible from current route delete route
+            routes_traveled.pop(0) #if not possible from current route delete route
+            print("route removed no possible place to go")
             if not len(routes_traveled):
                 return "not possible to reach destination"
             loc = [routes_traveled[0].path[-1].x_finish, routes_traveled[0].path[-1].y_finish] #return last location in the next best route
@@ -150,7 +150,7 @@ def path_finder(roads, start, final):
 
 
         routes_traveled = sorted(routes_traveled, key=lambda route: route.cost) #sorts based on lowest cost
-        loc = [routes_traveled[0].path[-1].x_finish, routes_traveled[0].path[-1].y_finish] #DOUBLE CHECK THIS
+        loc = [routes_traveled[0].path[-1].x_finish, routes_traveled[0].path[-1].y_finish] #sets loc to head of routes_travled
 
 
 
@@ -175,9 +175,15 @@ finish_2 = roads[15].name
 
 start = find_point(start_1, start_2)
 finish = find_point(finish_1, finish_2)
-print("start loc:" +str(start))
-print("end loc:" + str(finish))
-print(path_finder(roads, start, finish))
+if not start:
+    print("starting roads do not intersect please try again")
+
+if not finish:
+    print("finishing roads do not intersect please try again")
+if start and finish:
+    print("start loc:" +str(start))
+    print("end loc:" + str(finish))
+    print(path_finder(roads, start, finish))
 
 
 
