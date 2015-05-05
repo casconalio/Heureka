@@ -1,5 +1,6 @@
 import copy
 
+
 class PathToGoal:
     def __init__(self, initial_facts):
         self.facts=initial_facts
@@ -115,6 +116,24 @@ def read_kb(line):
         count = count + 1
     return [final_result, final_required]
 
+def new_fact(kb, facts):
+    for clause in kb: #go through clause objects
+        for required in clause.required:
+            set_required = set(required)
+            for result in clause.result:
+                set_results = set(result)
+                set_facts = set(facts)
+                if set_required.issubset(set_facts) and not set_results.issubset(set_facts):
+                    for item in set_results:
+                        print(str(set_required) + " => " + str(set_results))
+                        facts.append(item)
+                        return facts
+#def new_clause(kb):
+
+def prove_goal(kb, facts, goal):
+    while goal not in facts:
+        new_fact(kb, facts)
+
 initial_kb=[]
 initial_facts=[]
 paths=[]
@@ -124,8 +143,10 @@ for line in f:
     if not len(line):
         continue
     elif len(line.split())>1:
+        line = line.strip() #removes \n
         initial_kb.append(line)
     else:
+        line = line.strip() #removes \n
         initial_facts.append(line)
 
 for line in initial_kb: #initalize clauses
@@ -137,6 +158,8 @@ for line in initial_kb: #initalize clauses
 
 new_path = PathToGoal(initial_facts)
 paths.append(new_path)
+goal = KB[0].result
+prove_goal(KB, initial_facts, goal)
 
 
 
