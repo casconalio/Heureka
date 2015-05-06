@@ -1,9 +1,9 @@
-breakfast if hotdrink and juice and food
-breakfast if hotdrink and food
-hotdrink if coffee and cream
+breakfast if hotdrink juice food
+breakfast if hotdrink food
+hotdrink if coffee cream
 hotdrink if tea
-food if toast and butter
-food if egg and bacon
+food if toast butter
+food if egg bacon
 food if egg
 coffee
 tea

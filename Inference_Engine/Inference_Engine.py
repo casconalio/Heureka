@@ -3,10 +3,9 @@ import copy
 
 class PathToGoal:
     def __init__(self, initial_facts):
-        self.facts=initial_facts
-        #self.cost=
-
-    #def cost(self):
+        self.facts = initial_facts
+        self.used_clauses = []
+        self.cost = 0
 
 class Clause:
     def __init__(self, result, required):
@@ -29,115 +28,124 @@ def split_rule(line):
         required.append(word)
     return [result, required]
 
+def read_kb_section(section): #section is either result or required string
+    list_vals = [] #either required or result
+    count = 0
+    for word in section:
+        if word == "not":
+            list_vals.append("-"+str(section[count+1])) #appends "-"fact
+            count+=2
+        else:
+            list_vals.append(word)
+            count+=1
+    return list_vals
 
-def read_kb(line):
 
-    final_result=[]
-    final_required=[]
+def read_kb(line): #initialize knowledge base
     result, required = split_rule(line) #result is key, required is value in kb
-    set=[]
-    set2=[] #used for OR
-    count = 0
-    last_op = ""
-    for word in result:
-        if word == "and":
-            if word != last_op:
-                set=[]#makes it empty because it's a new set
-                set.append(result[count-1]) #avoids repeats
-            set.append(result[count+1])
-            last_op=word
+    result = read_kb_section(result)
+    required = read_kb_section(required)
+    return [result, required]
 
-            #if the next operator is not the same or if is checking past the end of result
-            #Have to check plus three in case there is a NOT in the next word
-            if count+3>len(result) or result[count+3] != word or result[count+2] != word:
-                final_result.append(set) #appends if no more AND chaining
+def new_facts(current, facts):
+    for clause in current.used_clauses: #go through clause objects
+        set_required = set(clause.required)
+        set_results = set(clause.result)
+        set_facts = set(facts)
+        if set_required.issubset(set_facts) and not set_results.issubset(set_facts):
+            for item in set_results:
+                print(str(set_required) + " => " + str(set_results))
+                facts.append(item)
+    return facts
 
-        elif word == "or":
-            set=[] #both sets should always be empty when dealing with or
-            set2=[]
-            if word != last_op:
-                set.append(result[count-1]) #blocks repeats
-            set2.append(result[count+1])
-            final_result.append(set)
-            final_result.append(set2)
-            last_op=word
 
-        elif word == "not":
-            set.append("-"+str(result[count+1])) #appends "-"fact
-            count =  count + 1
-            continue
-        elif len(result)<2:
-            final_result.append([word])
+def calc_cost(kb, clauses):
+    shortest_dist = len(clauses[-1].required)
+    traveled = len(clauses)
+    if len(clauses)>1:
+        old_est = len(clauses[-2].required)
+    else:
+        old_est = 0
+    cost = shortest_dist + traveled - old_est
+    return cost
+
+def possible_clause(current, kb, goal, req_item=''):
+    if len(current.used_clauses):
+        head = current.used_clauses[-1] #last clause explored
+    possible_nodes = []
+    for clause in kb:
+        for result in clause.result:
+            if not len(current.used_clauses): #when there is no starting point enter
+                if goal in result:
+                    possible_nodes.append(clause)
+                #continue
+            elif req_item in result and clause not in current.used_clauses:
+                possible_nodes.append(clause)
+
+    possible_nodes = sorted(possible_nodes, key=lambda clause: clause.required) #sorts based on least required
+    return possible_nodes
+
+def prove_goal(kb, paths, goal):
+    while goal not in paths[0].facts: #make sure goal is not in head path
+        current = copy.deepcopy(paths[0]) #set head 0th is thought to be best
+        new_clauses=[] #list of clauses for each required item
+        if len(current.used_clauses):
+            for item in current.used_clauses[-1].required:
+                to_explore = possible_clause(paths[0], kb, goal, item)
+                new_clauses.append(to_explore)
         else:
-            count = count + 1
-            continue
-        last_op = word
-        count = count + 1
+            to_explore = possible_clause(paths[0], kb, goal) #only enters for starting pos
+
+        if len(new_clauses)>1:#is there an "AND" in requirement
+            to_explore = []
+
+            for clause in new_clauses:
+                if to_explore:
+                    new_l = []
+                    for i in clause:
+                        for j in to_explore:
+                            new_l.append([i])
+                            new_l[-1].extend(j)
+                    to_explore = new_l
+                else:
+                    for i in clause:
+                        to_explore.append([i])
 
 
-    set=[]
-    set2=[] #used for OR
-    count = 0
-    last_op = ""
-    for word in required:
-        if word == "and":
-            if word != last_op:
-                set=[]#makes it empty because it's a new set
-                set.append(required[count-1]) #avoids repeats
-            set.append(required[count+1])
-            last_op=word
+##############################BELOW HAS NOT BEEN CHANGED TO FIT CODE YET #####################
 
-            #if the next operator is not the same or if is checking past the end of result
-            #Have to check plus three in case there is a NOT in the next word
+        while not len(to_explore): #if no possible places to explore enter this loop
+            paths.pop(0) #if not possible from current path delete path
+            print("route removed no possible place to go")
+            if not len(paths):
+                return "not possible to reach destination"
+            current = copy.deepcopy(paths[0]) #return last location in the next best route
+            for item in current.used_clauses[-1].required:
+                to_explore = possible_clause(paths[0], kb, goal, item)
+                new_clauses.append(to_explore)
 
-            if count+3>len(required) or (required[count+3] != word and required[count+2] != word):
-                final_required.append(set) #appends if no more AND chaining
+        #THIS UPDATES ROUTES TRAVELS WITHOUT ADDING NEW ROW
+        paths[0].used_clauses.append(to_explore[0])
+        paths[0].cost = calc_cost(kb, paths[0].used_clauses) #first object
 
-        elif word == "or":
-            set=[] #both sets should always be empty when dealing with or
-            set2=[]
-            if word != last_op:
-                set.append(result[count-1]) #blocks repeats
-            set2.append(result[count+1])
-            final_required.append(set)
-            final_required.append(set2)
-            last_op=word
+        to_explore.pop(0) #remove first possible clause as it is already added
 
-        elif word == "not":
-            set.append("-"+str(result[count+1])) #appends "-"fact
-            count =  count + 1
-            continue
-        elif len(required)<2:
-            final_required.append([word])
-        else:
-            count = count + 1
-            continue
-        last_op = word
-        count = count + 1
-    return [final_result, final_required]
+        if len(to_explore) > 0: #adds row
+            for clause in to_explore: #add new possible paths to explore
+                new_path = copy.deepcopy(current)
+                new_path.used_clauses.append(clause)
+                new_path.cost = calc_cost(kb, new_path.used_clauses)
+                paths.append(new_path)
+        current = copy.deepcopy(paths[0])
+        paths[0].facts = new_facts(current, current.facts)
+        paths = sorted(paths, key=lambda clause: clause.cost) #sorts based on lowest cost
 
-def new_fact(kb, facts):
-    for clause in kb: #go through clause objects
-        for required in clause.required:
-            set_required = set(required)
-            for result in clause.result:
-                set_results = set(result)
-                set_facts = set(facts)
-                if set_required.issubset(set_facts) and not set_results.issubset(set_facts):
-                    for item in set_results:
-                        print(str(set_required) + " => " + str(set_results))
-                        facts.append(item)
-                        return facts
-#def new_clause(kb):
 
-def prove_goal(kb, facts, goal):
-    while goal not in facts:
-        new_fact(kb, facts)
-
-initial_kb=[]
-initial_facts=[]
-paths=[]
+initial_kb = []
+initial_facts = []
+paths = []
 KB = []
+
 f=open("/home/badcode/Desktop/AI/Inference_Engine/breakfast.txt", 'r')
 for line in f:
     if not len(line):
@@ -155,11 +163,12 @@ for line in initial_kb: #initalize clauses
     KB.append(init_clause)
 
 
-
+goal = KB[0].result[0]
 new_path = PathToGoal(initial_facts)
 paths.append(new_path)
-goal = KB[0].result
-prove_goal(KB, initial_facts, goal)
+prove_goal(KB, paths, goal)
+
+
 
 
 
