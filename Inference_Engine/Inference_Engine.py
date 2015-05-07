@@ -59,7 +59,10 @@ def calc_cost(path):
     shortest_dist = 0 #initialize
     for clause in path.remain: #calculates path to shortest proof for each of remaining proofs
         #so if hotdrink and food were in remain it would calculate egg and tea
-        shortest_dist += len(clause.required)
+        if isinstance(clause, str): #if this is an item just add 1
+            shortest_dist += 1
+        else: #if this is actually a clause
+            shortest_dist += len(clause.required)
 
     traveled = len(path.used_clauses) #path traveled
     if len(path.used_clauses)>1:
@@ -127,6 +130,8 @@ def update_to_explore(current, kb, goal):
     if len(current.remain): #checks to make sure not the first iteration
         for item in current.remain[0].required: #expands first node in remaining nodes to explore
             to_explore = possible_clause(paths[0], kb, goal, item)
+            if not len(to_explore):
+                to_explore.append(item) #if item is requirement make sure to keep it as something to explore
             new_clauses.append(to_explore)
     else: #enters on first iteration
         for clause in possible_clause(paths[0], kb, goal): #appends clauses with identical results as seperate lists
@@ -144,6 +149,16 @@ def prove_goal(kb, paths, goal):
 
     while len(paths[0].remain): #exit with empty clause
         current = copy.deepcopy(paths[0]) #set head 0th is thought to be best
+
+        if isinstance(current.remain[0], str):
+            if current.remain[0] in current.facts:
+                paths[0].used_clauses.append(current.remain[0])
+                paths[0].remain.pop(0)
+                continue
+            else:
+                paths.pop(0)
+                current = copy.deepcopy(paths[0])
+
         to_explore = update_to_explore(current, kb, goal)
 
         while not len(to_explore): #if no possible places to explore enter this loop
@@ -159,7 +174,17 @@ def prove_goal(kb, paths, goal):
 
         if set(paths[0].remain[0].required).issubset(paths[0].facts): #if the the requirements of the
             #first clause in remain is a subset of facts then pop it from remain because it can be proven
+            paths[0].used_clauses.append(paths[0].remain[0])
             paths[0].remain.pop(0)
+        else:
+            if isinstance(paths[0].remain[0], str):
+#if the front element in remains is a string('juice') and is not in facts. Then remove this entire path
+#as it will never be possible
+                if paths[0].remain[0] in paths[0].facts:
+                    paths[0].used_clauses.append(paths[0].remain[0])
+                    paths[0].remain.pop(0)
+                else:
+                    paths.pop(0)
 
         paths = sorted(paths, key=lambda clause: clause.cost) #sorts based on lowest cost
     return "sucess!"
