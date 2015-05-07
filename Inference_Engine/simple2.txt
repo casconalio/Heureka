@@ -1,3 +1,4 @@
 a if b
 b if c
-b c
+b
+c

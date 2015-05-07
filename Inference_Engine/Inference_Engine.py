@@ -79,8 +79,10 @@ def possible_clause(current, kb, goal, req_item=''):
             if not len(current.used_clauses) and not len(current.remain): #when there is no starting point enter
                 if goal in result:
                     possible_nodes.append(clause)
-
-            elif req_item in result and clause not in current.used_clauses:
+#only append clause if it's result is a required item to remain, it's not already used in used_clauses or remains
+#also make sure that the clause is not pointing to itself (b if b)
+            elif (req_item in result and clause not in current.used_clauses and
+                clause not in current.remain and clause.result != clause.required):
                 possible_nodes.append(clause)
 
     possible_nodes = sorted(possible_nodes, key=lambda clause: clause.required) #sorts based on least required
@@ -91,20 +93,15 @@ def append_path(to_explore, paths, is_start = 0): #adds new row to paths
     original = copy.deepcopy(paths[0]) #preserve original
     for count, clause in enumerate(to_explore): #add new possible paths to explore
         new_path = copy.deepcopy(original)
-        if not count: #appends for first iteration and adds rows for the rest
-            paths[0].remain.extend(clause)
-            if not is_start:
-                paths[0].used_clauses.append(paths[0].remain[0])
-                paths[0].remain.pop(0) #remove previous clause. So when breakfast is expanded remove and replace
-            #it with a clause that points to all of it's items
-            paths[0].cost = calc_cost(paths[0])
-            continue
+        if not count: #calls paths[0] and shares memory location so both are being changed. only done so it may be appended to
+            new_path = paths[0]
         new_path.remain.extend(clause)
-        if not is_start: #enters if it's not the first iter
+        if not is_start: #enters if it's not the first time function is called for initialization
             new_path.used_clauses.append(new_path.remain[0]) #adds clause to used before popped
             new_path.remain.pop(0) #removes clause be this clause was replaced with a new set of clauses
         new_path.cost = calc_cost(new_path)
-        paths.append(new_path)
+        if count: #appends new_path only if it's not the 0th iteration
+            paths.append(new_path)
     return paths
 
 def comb_to_explore(new_clauses):#returns all possible unique combinations of to explore
@@ -138,6 +135,10 @@ def update_to_explore(current, kb, goal):
             to_explore.append([clause])
     if len(new_clauses)>1:#is there an "AND" in requirement
         to_explore = comb_to_explore(new_clauses)
+    if not isinstance(to_explore[0], list): #makes sure that to_explore is always a list of lists
+        emp_list = []
+        emp_list.append(to_explore)
+        to_explore = emp_list
     return to_explore
 
 def prove_goal(kb, paths, goal):
@@ -195,7 +196,7 @@ initial_facts = []
 paths = []
 KB = []
 
-f=open("/home/badcode/Desktop/AI/Inference_Engine/breakfast.txt", 'r')
+f=open("/home/badcode/Desktop/AI/Inference_Engine/simple2.txt", 'r')
 for line in f:
     if not len(line):
         continue
