@@ -8,7 +8,7 @@ our goal
 """
 class PathToGoal:
     def __init__(self, initial_facts):
-        self.facts = initial_facts
+        self.facts = initial_facts #totally useless
         self.used_clauses = [] #clauses that have been traveled
         self.remain = [] #clauses that have to be proven can continue
         self.cost = 0
@@ -172,19 +172,19 @@ def prove_goal(kb, paths, goal):
         if len(to_explore) > 0: #adds row
             paths = append_path(to_explore, paths)
 
-        if set(paths[0].remain[0].required).issubset(paths[0].facts): #if the the requirements of the
-            #first clause in remain is a subset of facts then pop it from remain because it can be proven
-            paths[0].used_clauses.append(paths[0].remain[0])
-            paths[0].remain.pop(0)
-        else:
-            if isinstance(paths[0].remain[0], str):
 #if the front element in remains is a string('juice') and is not in facts. Then remove this entire path
 #as it will never be possible
-                if paths[0].remain[0] in paths[0].facts:
-                    paths[0].used_clauses.append(paths[0].remain[0])
-                    paths[0].remain.pop(0)
-                else:
-                    paths.pop(0)
+        if isinstance(paths[0].remain[0], str):
+            if paths[0].remain[0] in paths[0].facts:
+                paths[0].used_clauses.append(paths[0].remain[0])
+                paths[0].remain.pop(0)
+            else:
+                paths.pop(0)
+        else:
+            if set(paths[0].remain[0].required).issubset(paths[0].facts): #if the the requirements of the
+                #first clause in remain is a subset of facts then pop it from remain because it can be proven
+                paths[0].used_clauses.append(paths[0].remain[0])
+                paths[0].remain.pop(0)
 
         paths = sorted(paths, key=lambda clause: clause.cost) #sorts based on lowest cost
     return "sucess!"
