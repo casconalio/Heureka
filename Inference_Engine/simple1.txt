@@ -1,5 +1,8 @@
-a if b c
-b if b
+a if e c
+e if b d q
 b if c d
+q if b z h
+h if z
 c
 d
+z

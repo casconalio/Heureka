@@ -1,6 +1,5 @@
 import copy
-
-
+import sys
 """
 First clauses should go into remain. From there each one is expanded. As soon as it is expanded it
 should be removed from remain and added to used_clauses. Once remain is the empty set we have solved
@@ -15,8 +14,8 @@ class PathToGoal:
 
 class Clause:
     def __init__(self, result, required):
-        self.result=result
-        self.required=required
+        self.result=result #what is implied
+        self.required=required #requirements to imply result
 
 #below functions are used for initialization
 def split_rule(line):
@@ -72,7 +71,7 @@ def calc_cost(path):
     cost = shortest_dist + traveled - old_est
     return cost
 
-def possible_clause(current, kb, goal, req_item=''):
+def possible_clause(current, kb, goal='', req_item=''):
     possible_nodes = []
     for clause in kb:
         for result in clause.result:
@@ -94,17 +93,22 @@ def append_path(to_explore, paths, is_start = 0): #adds new row to paths
     for count, clause in enumerate(to_explore): #add new possible paths to explore
         new_path = copy.deepcopy(original)
         if not count: #calls paths[0] and shares memory location so both are being changed. only done so it may be appended to
+            #on first iter
             new_path = paths[0]
+
         new_path.remain.extend(clause)
+
         if not is_start: #enters if it's not the first time function is called for initialization
             new_path.used_clauses.append(new_path.remain[0]) #adds clause to used before popped
             new_path.remain.pop(0) #removes clause be this clause was replaced with a new set of clauses
         new_path.cost = calc_cost(new_path)
         if count: #appends new_path only if it's not the 0th iteration
             paths.append(new_path)
-    return paths
+    return paths, to_explore
 
 def comb_to_explore(new_clauses):#returns all possible unique combinations of to explore
+#so when breakfast if hotdrink and food is explored. Every combination of clauses with hot dirnk and food
+#as the result are returned
     to_explore = []
     for clause in new_clauses:
         if to_explore:
@@ -125,6 +129,9 @@ def update_to_explore(current, kb, goal):
     to_explore = []
     #Generates next nodes
     if len(current.remain): #checks to make sure not the first iteration
+        if isinstance(current.remain[0], str): #there is no where to go if the first place in remain
+            #is not a clause
+            return to_explore
         for item in current.remain[0].required: #expands first node in remaining nodes to explore
             to_explore = possible_clause(paths[0], kb, goal, item)
             if not len(to_explore):
@@ -141,53 +148,90 @@ def update_to_explore(current, kb, goal):
         to_explore = emp_list
     return to_explore
 
+def update_remain(paths, kb, to_explore):
+    #if the front element in remains is a string('juice') and is not in facts. Then remove this entire path
+#as it will never be possible
+    is_fact = 0 #evaluates to false if nothing was popped
+    if isinstance(paths[0].remain[0], str):
+        if paths[0].remain[0] in paths[0].facts:
+            paths[0].used_clauses.append(paths[0].remain[0])
+            paths[0].remain.pop(0)
+            is_fact = 1
+            paths, to_explore = test_path(paths, kb, to_explore)
+    else:
+        if set(paths[0].remain[0].required).issubset(paths[0].facts): #if the the requirements of the
+            #first clause in remain is a subset of facts then pop it from remain because it can be proven
+            paths[0].used_clauses.append(paths[0].remain[0])
+            paths[0] = add_fact(paths[0])
+            paths[0].remain.pop(0)
+            is_fact = 1
+    return paths, is_fact
+
+def add_fact(path):
+    for fact in path.remain[0].result: #remain zero already proven
+        if fact not in path.facts: #only appends if not already in facts
+            path.facts.append(fact)
+    return path
+
+def pop_fact(paths, kb, to_explore): #this function makes sure that an item is never at the head of a path
+    #this prevents trying to call .remain on a string(non clause objects)
+    is_fact = 0 #tells us if anything was popped
+    #updated_paths = copy.deepcopy(paths)
+    for remain in paths[0].remain:
+        if isinstance(remain, str):
+            paths, is_fact = update_remain(paths, kb, to_explore)
+            paths, to_explore = test_path(paths, kb, to_explore)
+    return paths, is_fact
+
+def test_path(paths, kb, to_explore, goal=''): #check to see if path should be popped
+
+    while not len(to_explore): #if no possible places to explore enter this loop
+        paths.pop(0) #if not possible from current path delete path
+        print("path removed no possible place to go")
+        if not len(paths):
+            sys.exit("unable to reach goal")
+        current = copy.deepcopy(paths[0]) #return last location in the next best route
+        to_explore = update_to_explore(current, kb, goal)
+    return paths, to_explore
+
+def print_path(path):
+    print("proving " + str(path.used_clauses[0].result))
+    for clause in path.used_clauses:
+        if isinstance(clause, str):
+            #print("added " + clause + " to facts")
+            continue
+        print(str(clause.result) + " <- " + str(clause.required))
+    print("empty set reached")
+
 def prove_goal(kb, paths, goal):
     to_explore = []
     for clause in possible_clause(paths[0], kb, goal): #appends clauses with identical results as seperate lists
         to_explore.append([clause])
     if len(to_explore) > 0: #adds row
-        paths = append_path(to_explore, paths, 1)
+        paths, to_explore = append_path(to_explore, paths, 1)
 
     while len(paths[0].remain): #exit with empty clause
+        paths = sorted(paths, key=lambda clause: clause.cost) #sorts based on lowest cost
+
+        paths, is_fact = pop_fact(paths, kb, to_explore) #makes sure that an item is never at the head position
+        if is_fact: #has to continue just incase anything was popped. This tells us if we reach empty set
+            continue
         current = copy.deepcopy(paths[0]) #set head 0th is thought to be best
 
-        if isinstance(current.remain[0], str):
-            if current.remain[0] in current.facts:
-                paths[0].used_clauses.append(current.remain[0])
-                paths[0].remain.pop(0)
-                continue
-            else:
-                paths.pop(0)
-                current = copy.deepcopy(paths[0])
+        paths, is_fact = update_remain(paths, kb, to_explore)
+        if is_fact: #clause proven skip to next iter
+            continue
 
         to_explore = update_to_explore(current, kb, goal)
 
-        while not len(to_explore): #if no possible places to explore enter this loop
-            paths.pop(0) #if not possible from current path delete path
-            print("route removed no possible place to go")
-            if not len(paths):
-                return "not possible to reach destination"
-            current = copy.deepcopy(paths[0]) #return last location in the next best route
-            to_explore = update_to_explore(current, kb, goal)
+        paths, to_explore = test_path(paths, kb, to_explore, goal) #checks to make sure that it's possible to reach goal
 
         if len(to_explore) > 0: #adds row
-            paths = append_path(to_explore, paths)
-
-#if the front element in remains is a string('juice') and is not in facts. Then remove this entire path
-#as it will never be possible
-        if isinstance(paths[0].remain[0], str):
-            if paths[0].remain[0] in paths[0].facts:
-                paths[0].used_clauses.append(paths[0].remain[0])
-                paths[0].remain.pop(0)
-            else:
-                paths.pop(0)
-        else:
-            if set(paths[0].remain[0].required).issubset(paths[0].facts): #if the the requirements of the
-                #first clause in remain is a subset of facts then pop it from remain because it can be proven
-                paths[0].used_clauses.append(paths[0].remain[0])
-                paths[0].remain.pop(0)
-
-        paths = sorted(paths, key=lambda clause: clause.cost) #sorts based on lowest cost
+            paths, to_explore = append_path(to_explore, paths)
+        paths, is_fact = update_remain(paths, kb, to_explore)
+        paths, is_fact = pop_fact(paths, kb, to_explore)
+        paths, to_explore = test_path(paths, kb, to_explore)
+    print_path(paths[0])
     return "sucess!"
 
 
@@ -196,7 +240,7 @@ initial_facts = []
 paths = []
 KB = []
 
-f=open("/home/badcode/Desktop/AI/Inference_Engine/simple2.txt", 'r')
+f=open("/home/badcode/Desktop/AI/Inference_Engine/breakfast.txt", 'r')
 for line in f:
     if not len(line):
         continue
