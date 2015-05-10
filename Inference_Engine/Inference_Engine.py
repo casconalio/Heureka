@@ -7,7 +7,6 @@ our goal
 """
 class PathToGoal:
     def __init__(self, initial_facts):
-        self.facts = initial_facts #totally useless
         self.used_clauses = [] #clauses that have been traveled
         self.remain = [] #clauses that have to be proven can continue
         self.cost = 0
